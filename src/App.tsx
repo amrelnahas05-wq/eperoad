@@ -77,6 +77,8 @@ function SemesterSection({
   unlockedBy: Set<string>;
   onSelect: (code: string) => void;
 }) {
+  const [open, setOpen] = useState(true);
+
   const yearColors: Record<string, { grad: string; dot: string }> = {
     Freshman:  { grad: "from-violet-600 to-violet-500", dot: "bg-violet-500" },
     Sophomore: { grad: "from-sky-600 to-sky-500",       dot: "bg-sky-500" },
@@ -84,34 +86,32 @@ function SemesterSection({
     "Senior 1":{ grad: "from-orange-600 to-orange-500", dot: "bg-orange-500" },
     "Senior 2":{ grad: "from-rose-600 to-rose-500",     dot: "bg-rose-500" },
   };
-  const { grad, dot } = yearColors[semester.year] ?? { grad: "from-slate-600 to-slate-500", dot: "bg-slate-500" };
+  const { grad } = yearColors[semester.year] ?? { grad: "from-slate-600 to-slate-500", dot: "bg-slate-500" };
   const anySelected = selectedCode !== null;
+
+  const hasHighlight = semester.courses.some(c => prereqOf.has(c) || unlockedBy.has(c));
 
   return (
     <div className="w-full">
-      <div className={`flex items-center gap-3 px-4 py-3 bg-gradient-to-r ${grad} rounded-2xl mb-3`}>
-        <div>
+      <button
+        onClick={() => setOpen(p => !p)}
+        className={`w-full flex items-center gap-3 px-4 py-3 bg-gradient-to-r ${grad} rounded-2xl mb-0 transition-all active:scale-[0.99] ${open ? "rounded-b-none mb-0" : "rounded-2xl mb-0"}`}
+      >
+        <div className="text-left flex-1 min-w-0">
           <div className="text-white/70 text-[10px] font-bold uppercase tracking-widest">{semester.year}</div>
           <div className="text-white text-sm font-bold leading-tight">{semester.label}</div>
           <div className="text-white/60 text-[10px]">{semester.season} · {semester.courses.length} courses</div>
         </div>
-        <div className="ml-auto flex gap-1.5 flex-wrap justify-end">
-          {semester.courses.map((code) => {
-            const isPrereq = prereqOf.has(code);
-            const isUnlocks = unlockedBy.has(code);
-            return (
-              <span
-                key={code}
-                className={`w-2 h-2 rounded-full ${
-                  isPrereq ? "bg-rose-300" : isUnlocks ? "bg-emerald-300" : "bg-white/30"
-                }`}
-              />
-            );
-          })}
+        <div className="flex items-center gap-2 shrink-0">
+          {hasHighlight && !open && (
+            <span className="w-2 h-2 rounded-full bg-white/60 animate-pulse" />
+          )}
+          <span className={`text-white/80 text-sm transition-transform duration-200 ${open ? "rotate-180" : "rotate-0"}`}>▼</span>
         </div>
-      </div>
+      </button>
 
-      <div className="flex flex-col divide-y divide-slate-100 bg-white/70 rounded-2xl overflow-hidden border border-slate-200">
+      {open && (
+      <div className="flex flex-col divide-y divide-slate-100 bg-white/70 rounded-b-2xl overflow-hidden border border-t-0 border-slate-200 mb-0">
         {semester.courses.map((code) => {
           const isSelected = selectedCode === code;
           const isPrereq = prereqOf.has(code);
@@ -151,6 +151,7 @@ function SemesterSection({
           );
         })}
       </div>
+      )}
     </div>
   );
 }
